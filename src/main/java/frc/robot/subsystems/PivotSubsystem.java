@@ -15,21 +15,19 @@ import frc.robot.Constants.IntakePivotConstants;
 
 public class PivotSubsystem extends SubsystemBase {
 
-    private final SparkMax pivotLeft;
-    private final SparkMax pivotRight;
-
+    private final SparkMax pivot;
     public PivotSubsystem() {
 
         // Create motors
-        pivotLeft = new SparkMax(IntakePivotConstants.PIVOT_LEFT_MOTOR_ID, MotorType.kBrushless);
-        pivotRight = new SparkMax(IntakePivotConstants.PIVOT_RIGHT_MOTOR_ID, MotorType.kBrushless);
+        pivot = new SparkMax(IntakePivotConstants.PIVOT_RIGHT_MOTOR_ID, MotorType.kBrushless);
+      
 
         // Left motor configuration
         SparkMaxConfig leftConfig = new SparkMaxConfig();
         leftConfig
             .smartCurrentLimit(IntakePivotConstants.kPivotCurrentLimit)
-            .inverted(IntakePivotConstants.kPivotLeftInverted)
-            .idleMode(IntakePivotConstants.kPivotLeftIdleMode);
+            .inverted(IntakePivotConstants.kPivotRightInverted)
+            .idleMode(IntakePivotConstants.kPivotRightIdleMode);
 
         // Right motor configuration
         SparkMaxConfig rightConfig = new SparkMaxConfig();
@@ -38,23 +36,19 @@ public class PivotSubsystem extends SubsystemBase {
             .inverted(IntakePivotConstants.kPivotRightInverted)
             .idleMode(IntakePivotConstants.kPivotRightIdleMode);
 
-        pivotLeft.configure(leftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        pivotRight.configure(rightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        pivot.configure(rightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     public void pivotUp() {
-        pivotLeft.set(IntakePivotConstants.kPivotUpSpeed);
-        pivotRight.set(IntakePivotConstants.kPivotUpSpeed);
+       pivot.set(IntakePivotConstants.kPivotUpSpeed);
     }
 
     public void pivotDown() {
-        pivotLeft.set(IntakePivotConstants.kPivotDownSpeed);
-        pivotRight.set(IntakePivotConstants.kPivotDownSpeed);
+       pivot.set(IntakePivotConstants.kPivotDownSpeed);
     }
 
     public void stopPivot() {
-        pivotLeft.set(0);
-        pivotRight.set(0);
+        pivot.set(0);
     }
 
     @Override
@@ -62,3 +56,4 @@ public class PivotSubsystem extends SubsystemBase {
         // Runs every robot loop
     }
 }
+    

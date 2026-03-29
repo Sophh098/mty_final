@@ -15,15 +15,18 @@ public class ShooterSubsystem extends SubsystemBase {
     private final TalonFX shooterLeft;
     private final TalonFX shooterRight;
     private final TalonFX shooterIndexer;
+    private final TalonFX shooterHopper;
 
     public ShooterSubsystem() {
 
         shooterLeft = new TalonFX(ShooterConstants.shooterLEFT_ID, "6348 Horus CANivore");
         shooterRight = new TalonFX(ShooterConstants.shooterRIGHT_ID, "6348 Horus CANivore");
         shooterIndexer = new TalonFX(ShooterConstants.shooterINDEXER_ID, "6348 Horus CANivore");
+        shooterHopper = new TalonFX(ShooterConstants.shooterHOPPER_ID, "6348 Horus CANivore");
         configureMotor(shooterLeft, ShooterConstants.shooterLEFT_INVERTED);
         configureMotor(shooterRight, ShooterConstants.shooterRIGHT_INVERTED);
         configureMotor(shooterIndexer, ShooterConstants.shooterINDEXER_INVERTED);
+        configureMotor(shooterHopper, ShooterConstants.shooterHOPPER_INVERTED);
     }
 
     private void configureMotor(TalonFX motor, boolean inverted) {
@@ -44,10 +47,24 @@ public class ShooterSubsystem extends SubsystemBase {
         motor.getConfigurator().apply(config);
     }
 
+
     // SHOOTER A VELOCIDAD (RPS)
-    public void runShooterRPS(double rps) {
-        shooterLeft.setControl(new VelocityVoltage(rps));
-        shooterRight.setControl(new VelocityVoltage(rps));
+    public void runShooterV1(double percent) {
+        shooterLeft.setControl(new DutyCycleOut(0.43));
+        shooterRight.setControl(new DutyCycleOut(0.43));
+    }
+
+    public void runShooterV2(double percent) {
+        shooterLeft.setControl(new DutyCycleOut(0.375));
+        shooterRight.setControl(new DutyCycleOut(0.375));
+    }
+
+
+
+    // SHOOTER A PORCENTAJE ESPECIAL PARA LANZAR DE MEDIA CANCHA
+    public void runShooterMidField(double percent) {
+        shooterLeft.setControl(new DutyCycleOut(0.7));
+        shooterRight.setControl(new DutyCycleOut(0.7));
     }
 
     // INDEXER
@@ -55,17 +72,30 @@ public class ShooterSubsystem extends SubsystemBase {
         shooterIndexer.setControl(new DutyCycleOut(percent));
     }
 
-    // INDEXER
+    //INDEXER + HOPPER
+    public void runIndexerHopper(double indexerPercent, double hopperPercent) {
+        shooterIndexer.setControl(new DutyCycleOut(indexerPercent));
+        shooterHopper.setControl(new DutyCycleOut(hopperPercent));
+    }
 
-public void outtakeIndexer() {
+    // INDEXER
+    public void outtakeIndexer() {
     shooterIndexer.setControl(new DutyCycleOut(-0.5));
-}
+    }
+
+    // HOPPER
+    public void runHopper(){
+        shooterHopper.setControl(new DutyCycleOut(0.6));
+    }
+
+    
 
     // APAGA TODO
     public void stopAll() {
         shooterLeft.setControl(new DutyCycleOut(0));
         shooterRight.setControl(new DutyCycleOut(0));
         shooterIndexer.setControl(new DutyCycleOut(0));
+        shooterHopper.setControl(new DutyCycleOut(0));
     }
 
     @Override

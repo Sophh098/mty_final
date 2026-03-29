@@ -1,54 +1,54 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
-
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkBase.PersistMode;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
 
 public class IntakeSubsystem extends SubsystemBase {
-
-    private final SparkMax roller;
+   private final TalonFX roller;
 
     public IntakeSubsystem() {
-
-        // Crear motor con ID
-        roller = new SparkMax(IntakeConstants.ROLLER_MOTOR_ID, MotorType.kBrushless);
-
-        // Configuración
-        SparkMaxConfig rollerConfig = new SparkMaxConfig();
-        rollerConfig
-            .smartCurrentLimit(IntakeConstants.kRollerCurrentLimit)
-            .inverted(IntakeConstants.kRollerInverted);
-
-        roller.configure(rollerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        roller = new TalonFX(IntakeConstants.ROLLER_MOTOR_ID, "6348 Horus CANivore");
+        configureMotor(roller, IntakeConstants.kRollerInverted);
     }
 
-    public void runRoller(double speed) {
-        roller.set(speed);
+    private void configureMotor(TalonFX motor, boolean inverted) {
+
+        TalonFXConfiguration config = new TalonFXConfiguration();
+
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.MotorOutput.Inverted = inverted ?
+                InvertedValue.Clockwise_Positive :
+                InvertedValue.CounterClockwise_Positive;
+
+        // PID GAINS NECESARIOS PARA VELOCITY
+        config.Slot0.kP = 0.12;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kV = 0.12;
+
+        motor.getConfigurator().apply(config);
     }
 
-    public void stopRoller() {
-        roller.set(0);
+   public void RunIntake(){
+    roller.set(IntakeConstants.kIntakeSpeed);
+   }
+
+   public void RunOuttake(){
+    roller.set(IntakeConstants.kOuttakeSpeed);
+   }
+
+    public void stopRoller(){
+     roller.set(0);
     }
     
-    public void intake() {
-    roller.set(IntakeConstants.kIntakeSpeed);
-}
-
-public void outtake() {
-    roller.set(IntakeConstants.kOuttakeSpeed);
-}
-    @Override
-    public void periodic() {
-        // Se ejecuta cada ciclo
-    }
+     @Override
+     public void periodic() {
+          // Runs every robot loop
+     }
 }
