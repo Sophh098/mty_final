@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.Shooter;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
@@ -43,16 +43,19 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // SHOOTER A VELOCIDAD (RPS)
     public void runShooterV1(double percent) {
-        shooterLeft.setControl(new DutyCycleOut(0.44));
-        shooterRight.setControl(new DutyCycleOut(0.44));
+        shooterLeft.setControl(new DutyCycleOut(0.41));
+        shooterRight.setControl(new DutyCycleOut(0.41));
     }
 
     public void runShooterV2(double percent) {
-        shooterLeft.setControl(new DutyCycleOut(0.335));
-        shooterRight.setControl(new DutyCycleOut(0.335));
+        shooterLeft.setControl(new DutyCycleOut(0.345));
+        shooterRight.setControl(new DutyCycleOut(0.345));
     }
 
-
+    public void shoot (double DutyCycleOut){
+        this.shooterLeft.setControl(new DutyCycleOut(DutyCycleOut));
+        this.shooterRight.setControl(new DutyCycleOut(DutyCycleOut));
+    }   
 
     // SHOOTER A PORCENTAJE ESPECIAL PARA LANZAR DE MEDIA CANCHA
     public void runShooterMidField(double percent) {

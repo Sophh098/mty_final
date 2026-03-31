@@ -1,7 +1,6 @@
-package frc.robot.subsystems;
+package frc.robot.Intake;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -39,7 +38,7 @@ public class IntakeSubsystem extends SubsystemBase {
     roller.set(IntakeConstants.kIntakeSpeed);
    }
 
-   public void runIntake(double percent){
+   public void RunIntake(double percent){
     roller.set(percent);
    }
 
