@@ -39,6 +39,10 @@ public class IntakeSubsystem extends SubsystemBase {
     roller.set(IntakeConstants.kIntakeSpeed);
    }
 
+   public void runIntake(double percent){
+    roller.set(percent);
+   }
+
    public void RunOuttake(){
     roller.set(IntakeConstants.kOuttakeSpeed);
    }

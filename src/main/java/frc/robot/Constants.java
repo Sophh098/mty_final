@@ -64,7 +64,7 @@ public final class Constants {
 
 
          // Default speeds (percent output or RPM)
-         public static final double kShooterSpeed = 0.43;   // PERCENTAGE OUTPUT FOR SHOOTER
+         public static final double kShooterSpeed = 0.46;   // PERCENTAGE OUTPUT FOR SHOOTER
          public static final double kIndexerSpeed = 0.6;  // Example percent output for indexer
          public static final double kHopperSpeed = 0.6;  // PERCENTAGE OUTPUT FOR HOPPER
 

@@ -11,6 +11,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -21,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.HopperIndexerSubsystem;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -47,10 +50,29 @@ public class RobotContainer {
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
     private final IntakeSubsystem intake = new IntakeSubsystem();
     private final PivotSubsystem intakePivot = new PivotSubsystem();
+    private final HopperIndexerSubsystem HopperIndexerSubsystem = new HopperIndexerSubsystem();
+
+    private static final String DefaultAuto = "Default";
+
+    private static final String ShortAuto = "Short";
+    private static final String MiddleAuto = "Middle";
+    private static final String LongAuto = "Long";
+
+    private String AutoSelected;
+
+    private final SendableChooser<String> chooser = new SendableChooser<>();
 
 
     
     public RobotContainer() {
+
+        chooser.setDefaultOption("Default Auto", DefaultAuto);
+        chooser.addOption("Short Auto", ShortAuto);
+        chooser.addOption("Middle Auto", MiddleAuto);
+        chooser.addOption("Long Auto", LongAuto);
+
+        SmartDashboard.putData("Auto Selector", chooser);
+
         configureBindings();
     }
 
@@ -87,8 +109,8 @@ public class RobotContainer {
         joystick.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         //Left Trigger = Indexer + Hopper
-        joystick.leftTrigger().whileTrue(Commands.run(() -> shooterSubsystem.runIndexerHopper(0.6, 0.6), shooterSubsystem)).onFalse(Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem));
-
+        driver.leftTrigger().whileTrue(Commands.run(() -> HopperIndexerSubsystem.runIndexerHopper(0.6, 0.6), HopperIndexerSubsystem)).onFalse(Commands.runOnce(() -> HopperIndexerSubsystem.StopIt(), HopperIndexerSubsystem));
+       
         //Right Trigger = runShooterMidField
         joystick.rightTrigger().whileTrue(Commands.run(() -> shooterSubsystem.runShooterMidField(0.7), shooterSubsystem)).onFalse(Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem));
 
@@ -106,18 +128,27 @@ public class RobotContainer {
         // Left Bumper = Pivot Down
         driver.leftBumper().whileTrue(Commands.run(() -> intakePivot.pivotDown(), intakePivot)).onFalse( Commands.runOnce(() -> intakePivot.stopPivot(), intakePivot));
 
-       // Y= medida rara de jose pablo
-        driver.y().whileTrue(Commands.run(() -> shooterSubsystem.runShooterV2(0.375), shooterSubsystem)).onFalse(Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem));
+       // Left Trigger= medida rara de jose pablo
+        driver.y().whileTrue(
+        Commands.run(() -> shooterSubsystem.runShooterV2(0.335), shooterSubsystem)
+    )
+    .onTrue(Commands.runOnce(() -> {
+                boolean pivotDeployed = intakePivot.pivotEncoder.getPosition() < (intakePivot.homePosition + intakePivot.deployedPosition) / 2.0;
 
+            if (pivotDeployed) {
+                intakePivot.deployed();
+            } else {
+                intakePivot.home();
+            }
+        }, intakePivot)).onFalse( Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem));
+
+        
        // Right Triggr = ShooterRPS
         driver.rightTrigger().whileTrue(Commands.run(() -> shooterSubsystem.runShooterV1(0.43), shooterSubsystem)).onFalse(Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem));
 
-        //Left Trigger = Indexer + Hopper
-        driver.leftTrigger().whileTrue(Commands.run(() -> shooterSubsystem.runIndexerHopper(0.6, 0.6), shooterSubsystem)).onFalse(Commands.runOnce(() -> shooterSubsystem.stopAll(), shooterSubsystem));
-
-
-    // X button = indexer outtake
-driver.x().whileTrue(new StartEndCommand( () -> shooterSubsystem.outtakeIndexer(), () -> shooterSubsystem.runIndexer(0), shooterSubsystem));
+       
+       // X button = indexer outtake
+        driver.x().whileTrue(new StartEndCommand( () -> HopperIndexerSubsystem.outtakeIndexer(), () -> HopperIndexerSubsystem.runIndexer(0), shooterSubsystem));
 
 
 
@@ -126,32 +157,131 @@ driver.x().whileTrue(new StartEndCommand( () -> shooterSubsystem.outtakeIndexer(
 
 
     public Command getAutonomousCommand() {
-    final var idle = new SwerveRequest.Idle();
 
-    return Commands.sequence(
+      
 
-        // Reset heading
-        drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+    AutoSelected = chooser.getSelected();
 
-        // Spin shooter
-       //  Commands.runOnce(() -> {
-       //     double targetRPS = ShooterConstants.kShooterRPM / 60.0;
-       //     shooterSubsystem.runShooterRPS(targetRPS);
-        //}), 
+    switch (AutoSelected) {
 
-        // Wait for shooter to reach speed
-        Commands.waitSeconds(2.5),
+        case ShortAuto:
+            return Commands.sequence(
 
-        // Feed the note
-        Commands.run(() -> shooterSubsystem.runIndexer(0.6))
-            .withTimeout(6.0),
+            // Reset heading
+            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
 
-        // Stop shooter and indexer
-        Commands.runOnce(() -> shooterSubsystem.stopAll()),
-        
-        // Idle rest of auton
-        drivetrain.applyRequest(() -> idle)
-    );
+            Commands.runOnce(() -> intakePivot.deployed()),
 
+            // Spin shooter
+            Commands.runOnce(() -> {
+                double targetRPS = ShooterConstants.kShooterSpeed / 60.0;
+                shooterSubsystem.runShooterV2(targetRPS);
+            }), 
+
+            // Wait for shooter to reach speed
+            Commands.waitSeconds(2.5),
+
+            // Feed the note
+            Commands.runOnce(() -> HopperIndexerSubsystem.runIndexer(0.6)), 
+            Commands.runOnce(() -> HopperIndexerSubsystem.runHopper(0.6)),  
+            Commands.runOnce(() -> intake.runIntake(-0.4)),  
+
+            //Wait for the note to be fed
+            Commands.waitSeconds(6.0),
+
+            // Stop shooter and indexer
+            Commands.runOnce(() -> shooterSubsystem.stopAll()),
+            Commands.runOnce(() -> intake.stopRoller()),
+            Commands.runOnce(() -> HopperIndexerSubsystem.StopIt())
+         );
+
+        case MiddleAuto:
+            return Commands.sequence(
+
+                 // Reset heading
+            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+
+            Commands.runOnce(() -> intakePivot.deployed()),
+
+            // Spin shooter
+            Commands.runOnce(() -> {
+                double targetRPS = ShooterConstants.kShooterSpeed / 60.0;
+                shooterSubsystem.runShooterV1(targetRPS);
+            }), 
+
+            // Wait for shooter to reach speed
+            Commands.waitSeconds(2.5),
+
+            // Feed the note
+            Commands.run(() -> HopperIndexerSubsystem.runIndexer(0.6)),
+            Commands.run(() -> HopperIndexerSubsystem.runHopper(0.6)),  
+            Commands.runOnce(() -> intake.RunIntake()),  
+
+            // Stop shooter and indexer
+            Commands.runOnce(() -> shooterSubsystem.stopAll()),
+            Commands.runOnce(() -> intake.stopRoller()),
+            Commands.runOnce(() -> HopperIndexerSubsystem.StopIt())
+         );
+
+        case LongAuto:
+              return Commands.sequence(
+
+                 // Reset heading
+            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+
+            Commands.runOnce(() -> intakePivot.deployed()),
+
+            // Spin shooter
+            Commands.runOnce(() -> {
+                double targetRPS = ShooterConstants.kShooterSpeed / 60.0;
+                shooterSubsystem.runShooterV1(targetRPS);
+            }), 
+
+            // Wait for shooter to reach speed
+            Commands.waitSeconds(2.5),
+
+            // Feed the note
+            Commands.run(() -> HopperIndexerSubsystem.runIndexer(0.6))
+                .withTimeout(6.0),
+            Commands.run(() -> HopperIndexerSubsystem.runHopper(0.6)).withTimeout(6.0),  
+            Commands.runOnce(() -> intake.RunIntake()).withTimeout(6.0),  
+
+            // Stop shooter and indexer
+            Commands.runOnce(() -> shooterSubsystem.stopAll()),
+            Commands.runOnce(() -> intake.stopRoller()),
+            Commands.runOnce(() -> HopperIndexerSubsystem.StopIt())
+         );
+
+        case DefaultAuto:
+        default:
+              return Commands.sequence(
+
+                 // Reset heading
+            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+
+            Commands.runOnce(() -> intakePivot.deployed()),
+
+            // Spin shooter
+            Commands.runOnce(() -> {
+                double targetRPS = ShooterConstants.kShooterSpeed / 60.0;
+                shooterSubsystem.runShooterV1(targetRPS);
+            }), 
+
+            // Wait for shooter to reach speed
+            Commands.waitSeconds(2.5),
+
+            // Feed the note
+            Commands.run(() -> HopperIndexerSubsystem.runIndexer(0.6))
+                .withTimeout(6.0),
+            Commands.run(() -> HopperIndexerSubsystem.runHopper(0.6)).withTimeout(6.0),  
+            Commands.runOnce(() -> intake.RunIntake()).withTimeout(6.0),  
+
+            // Stop shooter and indexer
+            Commands.runOnce(() -> shooterSubsystem.stopAll()),
+            Commands.runOnce(() -> intake.stopRoller()),
+            Commands.runOnce(() -> HopperIndexerSubsystem.StopIt())
+         );
     }
+}           
+    
 }
